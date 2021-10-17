@@ -1,6 +1,6 @@
 ---
 title: "Activity 6"
-author: "Name"
+author: "Luke B Cadagin"
 output: github_document
 ---
 
@@ -48,7 +48,7 @@ How would this data be organized if it were tidy?
 Do not use any of your new `{tidyr}` skills yet, only describe it.
 
 **Response**: 
-
+The data frame `by_speaker` is untidy because each variable does not have its own column (words and season do not have their own columns).  This is the number one aspect of tidy data.
 
 ![](README-img/noun_pause.png) **Planned Pause Point**: If you have any questions, contact your instructor. Otherwise feel free to continue on.
 
@@ -83,7 +83,16 @@ Remember that you can view the help documentation by using the `?` method in you
 2. Assign your reformatted dataset to `friends_tidy`, and 
 3. Name your code chunk either `pivot_contains` or `pivot_ends` depending on which helper function you used.
 
+```{r pivot_contains}
+friends_tidy <- by_speaker %>% 
+  pivot_longer(
+    cols = contains("season"),
+    names_to = "season",
+    values_to = "words"
+  )
 
+friends_tidy
+```
 
 
 ### Save the dataset
@@ -95,7 +104,10 @@ We can do this by writing it to a file within our directory.
 2. Call the file that is being created "`friends_tidy.csv`".
 3. Name your code chunk `writing_file`
 
-
+```{r writing_file}
+friends_tidy %>% 
+write_csv(here::here("data", "friends_tidy.csv"))
+```
 
 
 Inspect that this file was created by looking in the `data` project folder in the **Files** pane.
@@ -113,7 +125,11 @@ This is the same information that we were just worked with, but structured in a 
 2. Assign this data file into meaningful objects.
 3. Name this code chunk `read_season_file`.
 
+```{r read_season_file}
+by_season <- read_csv(here::here("data", "by_season.csv"))
 
+by_season
+```
 
 
 Now, 
@@ -122,7 +138,12 @@ Now,
 2. Assign it to an object called `speaker_tidy`, and
 3. Name the code chunk `pivot_speaker`.
 
+```{r pivot_speaker}
+speaker_tidy <- by_season %>% 
+  pivot_longer(`Chandler`:`Ross`, names_to = "speaker", values_to = "words")
 
+speaker_tidy
+```
 
 
 #### Total words spoken
@@ -130,16 +151,58 @@ Now,
 Using `by_season` and your skills from past activities, write the code that computes the total number of words spoken by each season and the total words spoken across the series (challenge, can you display this information in one table?).
 Name this code chunk `season_summary`.
 
+```{r season_summary}
+by_season %>% 
+  rowwise() %>% 
+  mutate(total_words_by_season = sum(`Chandler`,`Joey`,`Monica`,`Phoebe`,`Rachel`,`Ross`)) %>% 
+  ungroup() %>% 
+  summarize(season, total_words_by_season, sum(total_words_by_season))
+```
 
 
 Using `by_speaker` and your skills from past activities, write the code that computes the total number of words spoken by each season and the total words spoken across the series (challenge, can you display this information in one table?).
 Name this code chunk `speaker_summary`.
 
+```{r speaker_summary}
+by_speaker %>% 
+  summarize(
+    season_1_word_total = sum(`Season 1`),
+    season_2_word_total = sum(`Season 2`),
+    season_3_word_total = sum(`Season 3`),
+    season_4_word_total = sum(`Season 4`),
+    season_5_word_total = sum(`Season 5`),
+    season_6_word_total = sum(`Season 6`),
+    season_7_word_total = sum(`Season 7`),
+    season_8_word_total = sum(`Season 8`),
+    season_9_word_total = sum(`Season 9`),
+    season_10_word_total = sum(`Season 10`),
+    series_word_total = sum(season_1_word_total, season_2_word_total, season_3_word_total, season_4_word_total, season_5_word_total, season_6_word_total, season_7_word_total, season_8_word_total, season_9_word_total, season_10_word_total)
+  ) %>% 
+  pivot_longer(
+    cols = contains("word"),
+    names_to = "season",
+    values_to = "total",
+  )
+```
 
 
 Using the `friends_tidy` object and your skills from past activities, write the code that computes the total number of words spoken by each season and the total words spoken across the series (challenge, can you display this information in one table?).
 Call this code chunk `tidy_summary`
 
+```{r tidy_summary}
+ test <- friends_tidy %>% 
+  group_by(season) %>% 
+  summarize(total_words_by_season = sum(words))
+  #summarize(season, total_words_by_season, total_words_by_series = sum(total_words_by_season))
+  
+total <- friends_tidy %>% 
+  summarize(total_words_by_season = sum(words))
+
+test2 <- tibble(season = "total", total)
+
+bind_rows(test, test2)
+  
+```
 
 
 How does the code for `friends_tidy` compare to the two `by_` code?
@@ -148,7 +211,8 @@ Which is easier to write?
 Which is easier to read?
 
 **Response**:
-
+The `friends_tidy` code was much easier to write because I could quickly group my data by season.
+The `friends_tidy` code is much easier to read as it is less code and easier to follow.
 
 
 ![](README-img/noun_pause.png) **Planned Pause Point**: If you have any questions, contact your instructor. Otherwise feel free to continue on.
@@ -170,12 +234,16 @@ The code below takes our tidy dataset, then creates one variable for each *Seaso
 
 ```{r season_wide}
 friends_tidy %>% 
-  pivot_wider(names_from = Season, values_from = Words)
+  pivot_wider(names_from = season, values_from = words)
 ```
 
 Write the code to take the tidy dataset and create one variable for each *speaker*.
 Call this code chunk `speaker_wide`.
 
+```{r speaker_wide}
+speaker_wide <- friends_tidy %>% 
+  pivot_wider(names_from = speaker, values_from = words)
+```
 
 
 
@@ -189,6 +257,10 @@ A note before installing new packages: The HPC support team has [created a guide
 
 Use `knitr::kable` and `{kableExtra}` to dress up the `speaker_wide` table.
 
+```{r}
+speaker_wide %>% 
+  knitr::kable()
+```
 
 
 ### The Curb Cut Effect
@@ -235,6 +307,12 @@ tidyr::us_rent_income
 
 2. Assign this to `us_wide`
 
+```{r}
+us_wide <- us_rent_income %>% 
+  pivot_wider(names_from = variable, names_glue = "{variable}_{.value}", values_from = c(estimate, moe))
+
+us_wide
+```
 
 
 Now, 
@@ -250,6 +328,12 @@ Now,
   Hint: There are some additional arguments in `pivot_longer` that can assist with this. Look at the **Examples** in the help documentation.
 
 2. Assign this to `us_long`
+
+```{r}
+us_long <- us_wide %>% 
+  pivot_longer(3:6, names_to = c("variable", "estimate", "moe"), values_to = )
+```
+
 
 
 ## Attribution
